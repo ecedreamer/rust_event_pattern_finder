@@ -14,11 +14,11 @@ pub struct Pattern {
 }
 
 fn get_filtered_events(
-    events: &Vec<HashMap<String, Value>>,
+    events: &[HashMap<String, Value>],
     filter_conditions: HashMap<String, Value>,
 ) -> Vec<&HashMap<String, Value>> {
     let filtered_events: Vec<_> = events
-        .into_iter()
+        .iter()
         .filter(|event| {
             filter_conditions
                 .iter()
@@ -29,7 +29,7 @@ fn get_filtered_events(
     filtered_events
 }
 
-pub fn find_pattern(events: &Vec<HashMap<String, Value>>, query: Query) -> Pattern {
+pub fn find_pattern(events: &[HashMap<String, Value>], query: Query) -> Pattern {
     // get filtered events
     let filtered_events = get_filtered_events(events, query.filter_conditions);
 
@@ -43,14 +43,8 @@ pub fn find_pattern(events: &Vec<HashMap<String, Value>>, query: Query) -> Patte
             .collect::<Vec<&str>>()
             .join("|#|").to_string();
 
-        if grouped_results.contains_key(&key_combination) {
-            grouped_results
-                .entry(key_combination)
-                .or_insert(vec![])
-                .push(event);
-        } else {
-            grouped_results.insert(key_combination, vec![event]);
-        }
+
+        grouped_results.entry(key_combination).or_default().push(event);
     }
 
     let mut all_matched_set = vec![];
@@ -59,13 +53,7 @@ pub fn find_pattern(events: &Vec<HashMap<String, Value>>, query: Query) -> Patte
         if result_value.len() as i32 >= query.occurance {
             let chunked_result_value: Vec<Vec<_>> = result_value
                 .chunks(query.occurance as usize)
-                .filter_map(|chunk| {
-                    if chunk.len() as i32 == query.occurance {
-                        Some(chunk.to_vec())
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(|chunk| Some(chunk.to_vec()).filter(|_| chunk.len() as i32 == query.occurance))
                 .collect();
             final_result.insert(result_key, chunked_result_value.clone());
             all_matched_set.extend(chunked_result_value.clone())

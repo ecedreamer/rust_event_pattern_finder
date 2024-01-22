@@ -32,7 +32,7 @@ fn main() {
     let query = Query {
         occurance: 2,
         filter_conditions: condition.clone(),
-        group_keys: group_keys,
+        group_keys,
         time_frame: None,
     };
     let matched_pattern = find_pattern(&events, query);
